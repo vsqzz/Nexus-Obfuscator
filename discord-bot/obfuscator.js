@@ -108,9 +108,8 @@ class PrometheusObfuscator {
       // Add Nexus header
       const nexusHeader = `--[[\n` +
         `    Obfuscated by Nexus Obfuscator\n` +
-        `    https://github.com/vsqzz/Nexus-Obfuscator\n` +
         `    \n` +
-        `    Powered by Prometheus\n` +
+        `    Powered by Nexus Softworks\n` +
         `    Date: ${new Date().toLocaleString()}\n` +
         `]]\n\n`;
 
@@ -233,3 +232,4 @@ class PrometheusObfuscator {
 }
 
 module.exports = PrometheusObfuscator;
+
