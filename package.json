@@ -2,13 +2,13 @@
   "name": "nexus-obfuscator",
   "version": "2.0.0",
   "description": "Advanced Lua obfuscator with Discord bot and API",
-  "main": "src/index.js",
+  "main": "index.js",
   "scripts": {
-    "start": "node src/index.js",
-    "bot": "node src/bot/index.js",
-    "api": "node src/api/index.js",
-    "dev": "nodemon src/index.js",
-    "test": "jest"
+    "start": "node index.js",
+    "bot": "node bot.js",
+    "api": "node index.js api",
+    "dev": "nodemon index.js",
+    "test": "node scripts/test.js"
   },
   "keywords": ["lua", "obfuscator", "discord-bot", "api"],
   "author": "",
