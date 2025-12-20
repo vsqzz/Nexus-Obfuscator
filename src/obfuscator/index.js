@@ -1,40 +1,38 @@
-const { exec } = require('child_process');
+const { spawn } = require('child_process');
 const fs = require('fs').promises;
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 
 class LuaObfuscator {
   constructor(options = {}) {
-    this.tempDir = options.tempDir || path.join(__dirname, '../../temp');
-    this.obfuscatorPath = path.join(__dirname, '../../obfuscator.lua');
-    this.templatePath = path.join(__dirname, '../../template.out');
-    this.minifyPath = path.join(__dirname, '../../minify.js');
+    const SRC_ROOT = path.resolve(__dirname, '..');
+
+    this.tempDir = options.tempDir || path.join(SRC_ROOT, 'temp');
+    this.obfuscatorPath = path.join(
+      SRC_ROOT,
+      'obfuscator',
+      'obfuscator.lua'
+    );
+
+    console.log('[DEBUG] __dirname =', __dirname);
+    console.log('[DEBUG] SRC_ROOT =', SRC_ROOT);
+    console.log('[DEBUG] obfuscatorPath =', this.obfuscatorPath);
   }
 
   async initialize() {
-    try {
-      await fs.mkdir(this.tempDir, { recursive: true });
-    } catch (error) {
-      console.error('Error creating temp directory:', error);
-    }
+    await fs.mkdir(this.tempDir, { recursive: true });
   }
 
-  async obfuscate(luaCode, options = {}) {
+  async obfuscate(luaCode) {
     const jobId = uuidv4();
     const inputFile = path.join(this.tempDir, `input_${jobId}.lua`);
-    const outputFile = path.join(this.tempDir, `output_${jobId}.txt`);
+    const outputFile = path.join(this.tempDir, `output_${jobId}.lua`);
 
     try {
-      // Write input code to temp file
       await fs.writeFile(inputFile, luaCode, 'utf8');
-
-      // Run the obfuscator
       await this.runObfuscator(inputFile, outputFile);
 
-      // Read the obfuscated output
       const obfuscatedCode = await fs.readFile(outputFile, 'utf8');
-
-      // Cleanup temp files
       await this.cleanup(inputFile, outputFile);
 
       return {
@@ -47,13 +45,11 @@ class LuaObfuscator {
           ratio: (obfuscatedCode.length / luaCode.length).toFixed(2)
         }
       };
-    } catch (error) {
-      // Cleanup on error
+    } catch (err) {
       await this.cleanup(inputFile, outputFile);
-
       return {
         success: false,
-        error: error.message,
+        error: err.message,
         jobId
       };
     }
@@ -61,54 +57,68 @@ class LuaObfuscator {
 
   runObfuscator(inputFile, outputFile) {
     return new Promise((resolve, reject) => {
-      // Create a modified version of the obfuscator that accepts parameters
-      const command = `lua ${this.obfuscatorPath} ${inputFile} ${outputFile}`;
+      const luaExe = 'C:\\Users\\kai\\Desktop\\lua\\lua54.exe';
 
-      exec(command, { timeout: 30000 }, (error, stdout, stderr) => {
-        if (error) {
-          reject(new Error(`Obfuscation failed: ${stderr || error.message}`));
-          return;
+      const absInput = path.resolve(inputFile);
+      const absOutput = path.resolve(outputFile);
+      const absObfuscator = path.resolve(this.obfuscatorPath);
+
+      console.log('[DEBUG] Lua exe:', luaExe);
+      console.log('[DEBUG] Obfuscator:', absObfuscator);
+      console.log('[DEBUG] Input:', absInput);
+      console.log('[DEBUG] Output:', absOutput);
+
+      const proc = spawn(
+        luaExe,
+        [absObfuscator, absInput, absOutput],
+        { windowsHide: true }
+      );
+
+      let stderr = '';
+      let stdout = '';
+
+      proc.stdout.on('data', d => stdout += d.toString());
+      proc.stderr.on('data', d => stderr += d.toString());
+
+      proc.on('error', err => {
+        reject(new Error(`Failed to start Lua: ${err.message}`));
+      });
+
+      proc.on('close', code => {
+        if (code !== 0) {
+          reject(new Error(stderr || stdout || `Lua exited with code ${code}`));
+        } else {
+          resolve();
         }
-        resolve(stdout);
+      });
+    });
+  }
+
+  async validateLuaCode(code) {
+    const tempFile = path.join(this.tempDir, `validate_${uuidv4()}.lua`);
+    await fs.writeFile(tempFile, code, 'utf8');
+
+    return new Promise(resolve => {
+      const proc = spawn('luac', ['-p', tempFile], { windowsHide: true });
+
+      let stderr = '';
+
+      proc.stderr.on('data', d => stderr += d.toString());
+
+      proc.on('close', code => {
+        fs.unlink(tempFile).catch(() => {});
+        resolve(
+          code === 0
+            ? { valid: true }
+            : { valid: false, error: stderr.trim() }
+        );
       });
     });
   }
 
   async cleanup(...files) {
     for (const file of files) {
-      try {
-        await fs.unlink(file);
-      } catch (error) {
-        // Ignore cleanup errors
-      }
-    }
-  }
-
-  async validateLuaCode(code) {
-    const tempFile = path.join(this.tempDir, `validate_${uuidv4()}.lua`);
-
-    try {
-      await fs.writeFile(tempFile, code, 'utf8');
-
-      return new Promise((resolve) => {
-        exec(`luac -p ${tempFile}`, (error, stdout, stderr) => {
-          fs.unlink(tempFile).catch(() => {});
-
-          if (error) {
-            resolve({
-              valid: false,
-              error: stderr || error.message
-            });
-          } else {
-            resolve({ valid: true });
-          }
-        });
-      });
-    } catch (error) {
-      return {
-        valid: false,
-        error: error.message
-      };
+      await fs.unlink(file).catch(() => {});
     }
   }
 }
