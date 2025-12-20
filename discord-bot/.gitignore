@@ -18,3 +18,9 @@ Thumbs.db
 .idea/
 *.swp
 *.swo
+
+# Prometheus obfuscator (cloned from GitHub)
+prometheus-obfuscator/
+
+# Temp files
+temp/
