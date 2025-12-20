@@ -3,11 +3,10 @@ const fs = require('fs').promises;
 const path = require('path');
 const { v4: uuidv4 } = require('uuid');
 
-class LuaObfuscator {
+class LuauObfuscator {
   constructor(options = {}) {
     this.tempDir = options.tempDir || path.join(__dirname, '../../temp');
     this.luauObfuscatorPath = path.join(__dirname, 'obfuscator_luau.lua');
-    this.standardObfuscatorPath = path.join(__dirname, 'obfuscator_improved.lua');
   }
 
   async initialize() {
@@ -20,27 +19,19 @@ class LuaObfuscator {
 
   async obfuscate(luaCode, options = {}) {
     const jobId = uuidv4();
-    const type = options.type || 'luau'; // 'luau' or 'standard'
-    const level = options.level || 'medium'; // 'low', 'medium', 'high'
-
     const inputFile = path.join(this.tempDir, `input_${jobId}.lua`);
     const outputFile = path.join(this.tempDir, `output_${jobId}.lua`);
+    const level = options.level || 'medium'; // low, medium, high
 
     try {
       // Write input code to temp file
       await fs.writeFile(inputFile, luaCode, 'utf8');
 
-      let obfuscatedCode;
+      // Run the Luau obfuscator
+      await this.runObfuscator(inputFile, outputFile, level);
 
-      if (type === 'luau') {
-        // Use Luau obfuscator (Roblox compatible)
-        await this.runLuauObfuscator(inputFile, outputFile, level);
-        obfuscatedCode = await fs.readFile(outputFile, 'utf8');
-      } else {
-        // Use standard Lua 5.1 obfuscator (bytecode based)
-        await this.runStandardObfuscator(inputFile, outputFile);
-        obfuscatedCode = await fs.readFile(outputFile, 'utf8');
-      }
+      // Read the obfuscated output
+      const obfuscatedCode = await fs.readFile(outputFile, 'utf8');
 
       // Cleanup temp files
       await this.cleanup(inputFile, outputFile);
@@ -53,8 +44,7 @@ class LuaObfuscator {
           originalSize: luaCode.length,
           obfuscatedSize: obfuscatedCode.length,
           ratio: (obfuscatedCode.length / luaCode.length).toFixed(2),
-          type: type,
-          level: type === 'luau' ? level : 'standard'
+          level: level
         }
       };
     } catch (error) {
@@ -69,27 +59,13 @@ class LuaObfuscator {
     }
   }
 
-  runLuauObfuscator(inputFile, outputFile, level) {
+  runObfuscator(inputFile, outputFile, level) {
     return new Promise((resolve, reject) => {
       const command = `lua "${this.luauObfuscatorPath}" "${inputFile}" "${outputFile}" "${level}"`;
 
       exec(command, { timeout: 30000 }, (error, stdout, stderr) => {
         if (error) {
-          reject(new Error(`Luau obfuscation failed: ${stderr || error.message}`));
-          return;
-        }
-        resolve(stdout);
-      });
-    });
-  }
-
-  runStandardObfuscator(inputFile, outputFile) {
-    return new Promise((resolve, reject) => {
-      const command = `lua "${this.standardObfuscatorPath}" "${inputFile}" "${outputFile}"`;
-
-      exec(command, { timeout: 30000 }, (error, stdout, stderr) => {
-        if (error) {
-          reject(new Error(`Standard obfuscation failed: ${stderr || error.message}`));
+          reject(new Error(`Obfuscation failed: ${stderr || error.message}`));
           return;
         }
         resolve(stdout);
@@ -108,7 +84,8 @@ class LuaObfuscator {
   }
 
   async validateLuaCode(code) {
-    // Basic syntax validation
+    // Basic syntax validation for Luau
+    // Check for common syntax errors
     const checks = [
       { pattern: /\bthen\s*$/, error: 'Incomplete if/elseif statement' },
       { pattern: /\bdo\s*$/, error: 'Incomplete do block' },
@@ -124,7 +101,7 @@ class LuaObfuscator {
       }
     }
 
-    // Check balanced parentheses, brackets, braces
+    // Check balanced parentheses
     let parenCount = 0;
     let braceCount = 0;
     let bracketCount = 0;
@@ -152,4 +129,4 @@ class LuaObfuscator {
   }
 }
 
-module.exports = LuaObfuscator;
+module.exports = LuauObfuscator;
