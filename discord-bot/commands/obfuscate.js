@@ -60,7 +60,7 @@ module.exports = {
 
       // Obfuscate
       await interaction.editReply('🔒 Obfuscating...');
-      const result = obfuscator.obfuscate(code, { level });
+      const result = await obfuscator.obfuscate(code, { level });
 
       if (!result.success) {
         return await interaction.editReply({
