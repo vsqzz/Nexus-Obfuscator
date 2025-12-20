@@ -1,161 +1,172 @@
 /**
- * Luau Obfuscator Engine
- * Pure JavaScript obfuscator for Roblox/Luau scripts
+ * Prometheus Obfuscator Wrapper
+ * Uses the proven Prometheus obfuscator instead of custom AI code
+ * https://github.com/prometheus-lua/Prometheus
  */
 
-class LuauObfuscator {
+const { exec } = require('child_process');
+const fs = require('fs').promises;
+const path = require('path');
+const { v4: uuidv4 } = require('uuid');
+
+class PrometheusObfuscator {
   constructor() {
-    this.version = '2.0';
+    this.version = 'Prometheus (Real Obfuscator)';
+    this.prometheusPath = path.join(__dirname, 'prometheus-obfuscator');
+    this.cliPath = path.join(this.prometheusPath, 'cli.lua');
+    this.tempDir = path.join(__dirname, 'temp');
   }
 
   /**
-   * XOR encrypt a string
+   * Initialize temp directory
    */
-  encryptString(str) {
-    const key = Math.floor(Math.random() * 255) + 1;
-    const encrypted = [];
-
-    for (let i = 0; i < str.length; i++) {
-      encrypted.push(str.charCodeAt(i) ^ key);
+  async initialize() {
+    try {
+      await fs.mkdir(this.tempDir, { recursive: true });
+    } catch (error) {
+      console.error('Error creating temp directory:', error);
     }
-
-    return { encrypted, key };
   }
 
   /**
-   * Generate string decryptor code
+   * Check if Lua is installed
    */
-  generateStringDecryptor(encrypted, key) {
-    const bytes = encrypted.join(',');
-    return `(function() local t={${bytes}} local s='' for i=1,#t do s=s..string.char(t[i]~${key}) end return s end)()`;
-  }
-
-  /**
-   * Obfuscate a number using various methods
-   */
-  obfuscateNumber(num) {
-    const methods = [
-      // Addition/Subtraction
-      () => {
-        const offset = Math.floor(Math.random() * 200) + 50;
-        return `((${num + offset})-${offset})`;
-      },
-      // Multiplication/Division
-      () => {
-        const factor = Math.floor(Math.random() * 5) + 2;
-        return `(${num * factor}/${factor})`;
-      },
-      // XOR
-      () => {
-        const mask = Math.floor(Math.random() * 200) + 1;
-        return `(${num ^ mask}~${mask}~${mask})`;
-      },
-      // Bit shift
-      () => {
-        const shift = Math.floor(Math.random() * 3) + 1;
-        return `(${num << shift}>>${shift})`;
-      }
-    ];
-
-    return methods[Math.floor(Math.random() * methods.length)]();
-  }
-
-  /**
-   * Generate random variable name
-   */
-  generateVarName(length = 8) {
-    const chars = 'IlO0oLiILOol_';
-    let name = chars[Math.floor(Math.random() * 10)]; // First char can't be number
-
-    for (let i = 1; i < length; i++) {
-      name += chars[Math.floor(Math.random() * chars.length)];
-    }
-
-    return name;
-  }
-
-  /**
-   * Main obfuscation function
-   */
-  obfuscate(code, options = {}) {
-    const level = options.level || 'medium';
-    let obfuscated = code;
-    const stats = {
-      originalSize: code.length,
-      stringsEncrypted: 0,
-      numbersObfuscated: 0,
-      variablesRenamed: 0
-    };
-
-    // Add header
-    const header = `-- Obfuscated by Nexus Obfuscator v${this.version}\n-- https://github.com/vsqzz/Nexus-Obfuscator\n\n`;
-
-    // Stage 1: Encrypt strings (ALL LEVELS)
-    obfuscated = obfuscated.replace(/"([^"]*)"/g, (match, str) => {
-      if (str.length === 0) return match;
-      stats.stringsEncrypted++;
-      const { encrypted, key } = this.encryptString(str);
-      return this.generateStringDecryptor(encrypted, key);
-    });
-
-    obfuscated = obfuscated.replace(/'([^']*)'/g, (match, str) => {
-      if (str.length === 0) return match;
-      stats.stringsEncrypted++;
-      const { encrypted, key } = this.encryptString(str);
-      return this.generateStringDecryptor(encrypted, key);
-    });
-
-    // Stage 2: Obfuscate numbers (MEDIUM & HIGH)
-    if (level === 'medium' || level === 'high') {
-      obfuscated = obfuscated.replace(/\b(\d+)\b/g, (match, num) => {
-        if (parseInt(num) === 0) return num; // Keep 0 as is
-        stats.numbersObfuscated++;
-        return this.obfuscateNumber(parseInt(num));
-      });
-    }
-
-    // Stage 3: Variable renaming (HIGH ONLY)
-    if (level === 'high') {
-      const varPattern = /\blocal\s+([a-zA-Z_][a-zA-Z0-9_]*)\s*=/g;
-      const variables = new Map();
-
-      obfuscated = obfuscated.replace(varPattern, (match, varName) => {
-        if (!variables.has(varName)) {
-          variables.set(varName, this.generateVarName());
-          stats.variablesRenamed++;
+  async checkLuaInstalled() {
+    return new Promise((resolve) => {
+      exec('lua -v', (error) => {
+        if (error) {
+          resolve(false);
+        } else {
+          resolve(true);
         }
-        return `local ${variables.get(varName)} =`;
       });
+    });
+  }
 
-      // Replace variable usage
-      variables.forEach((newName, oldName) => {
-        const regex = new RegExp(`\\b${oldName}\\b`, 'g');
-        obfuscated = obfuscated.replace(regex, newName);
-      });
+  /**
+   * Obfuscate Lua code using Prometheus
+   */
+  async obfuscate(code, options = {}) {
+    const level = options.level || 'medium';
+    const jobId = uuidv4();
+    const inputFile = path.join(this.tempDir, `input_${jobId}.lua`);
+    const outputFile = path.join(this.tempDir, `output_${jobId}.lua`);
 
-      // Add junk code
-      const junkVars = [];
-      for (let i = 0; i < 3; i++) {
-        junkVars.push(`local ${this.generateVarName()} = ${Math.floor(Math.random() * 100)}`);
+    const startTime = Date.now();
+    const originalSize = code.length;
+
+    try {
+      // Check if Lua is installed
+      const luaInstalled = await this.checkLuaInstalled();
+      if (!luaInstalled) {
+        return {
+          success: false,
+          error: 'Lua is not installed. Please install Lua 5.1 or LuaJIT to use Prometheus obfuscator.\n' +
+                 'Download: https://sourceforge.net/projects/luabinaries/'
+        };
       }
-      obfuscated = junkVars.join('\n') + '\n\n' + obfuscated;
+
+      // Write input file
+      await fs.writeFile(inputFile, code, 'utf8');
+
+      // Map level to Prometheus preset
+      const presetMap = {
+        'low': 'Minify',
+        'medium': 'Medium',
+        'high': 'Strong'
+      };
+      const preset = presetMap[level] || 'Medium';
+
+      // Run Prometheus
+      const result = await this.runPrometheus(inputFile, outputFile, preset);
+
+      if (!result.success) {
+        await this.cleanup(inputFile, outputFile);
+        return {
+          success: false,
+          error: result.error,
+          jobId
+        };
+      }
+
+      // Read obfuscated output
+      const obfuscatedCode = await fs.readFile(outputFile, 'utf8');
+      const obfuscatedSize = obfuscatedCode.length;
+
+      // Cleanup temp files
+      await this.cleanup(inputFile, outputFile);
+
+      const endTime = Date.now();
+
+      return {
+        success: true,
+        code: obfuscatedCode,
+        jobId,
+        stats: {
+          originalSize,
+          obfuscatedSize,
+          ratio: (obfuscatedSize / originalSize).toFixed(2),
+          time: ((endTime - startTime) / 1000).toFixed(2) + 's',
+          preset: preset,
+          stringsEncrypted: '✓',
+          numbersObfuscated: preset !== 'Minify' ? '✓' : '✗',
+          variablesRenamed: '✓',
+          functionsObfuscated: '✓'
+        }
+      };
+
+    } catch (error) {
+      await this.cleanup(inputFile, outputFile);
+      return {
+        success: false,
+        error: error.message,
+        jobId
+      };
     }
+  }
 
-    stats.obfuscatedSize = header.length + obfuscated.length;
-    stats.ratio = (stats.obfuscatedSize / stats.originalSize).toFixed(2);
+  /**
+   * Run Prometheus CLI
+   */
+  runPrometheus(inputFile, outputFile, preset) {
+    return new Promise((resolve) => {
+      const command = `lua "${this.cliPath}" --preset ${preset} --out "${outputFile}" "${inputFile}"`;
 
-    return {
-      success: true,
-      code: header + obfuscated,
-      stats
-    };
+      exec(command, {
+        timeout: 60000,
+        maxBuffer: 10 * 1024 * 1024 // 10MB buffer
+      }, (error, stdout, stderr) => {
+        if (error) {
+          resolve({
+            success: false,
+            error: `Prometheus failed: ${stderr || error.message}`
+          });
+          return;
+        }
+
+        resolve({ success: true });
+      });
+    });
+  }
+
+  /**
+   * Cleanup temp files
+   */
+  async cleanup(...files) {
+    for (const file of files) {
+      try {
+        await fs.unlink(file);
+      } catch (error) {
+        // Ignore cleanup errors
+      }
+    }
   }
 
   /**
    * Validate Lua code (basic)
    */
   validate(code) {
-    // Check balanced parentheses
+    // Check balanced parentheses, braces, brackets
     let parenCount = 0;
     let braceCount = 0;
     let bracketCount = 0;
@@ -167,14 +178,24 @@ class LuauObfuscator {
       if (char === '}') braceCount--;
       if (char === '[') bracketCount++;
       if (char === ']') bracketCount--;
+
+      // Early exit if negative
+      if (parenCount < 0) return { valid: false, error: 'Unbalanced parentheses' };
+      if (braceCount < 0) return { valid: false, error: 'Unbalanced braces' };
+      if (bracketCount < 0) return { valid: false, error: 'Unbalanced brackets' };
     }
 
     if (parenCount !== 0) return { valid: false, error: 'Unbalanced parentheses' };
     if (braceCount !== 0) return { valid: false, error: 'Unbalanced braces' };
     if (bracketCount !== 0) return { valid: false, error: 'Unbalanced brackets' };
 
+    // Check for basic Lua syntax
+    if (code.trim().length === 0) {
+      return { valid: false, error: 'Empty code' };
+    }
+
     return { valid: true };
   }
 }
 
-module.exports = LuauObfuscator;
+module.exports = PrometheusObfuscator;

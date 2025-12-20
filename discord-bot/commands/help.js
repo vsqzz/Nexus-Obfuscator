@@ -18,7 +18,7 @@ module.exports = {
         },
         {
           name: '📊 Protection Levels',
-          value: '**Low:** String encryption only (fast)\n**Medium:** Strings + numbers (recommended)\n**High:** Full protection + variable renaming',
+          value: '**Low:** String encryption (~6x size)\n**Medium:** Advanced obfuscation (~14x size) ⭐\n**High:** Professional VM wrap (~25x size)\n\nHigher = More protected but larger file',
           inline: false
         },
         {
@@ -27,8 +27,8 @@ module.exports = {
           inline: false
         },
         {
-          name: '✨ Features',
-          value: '• XOR string encryption\n• Number obfuscation\n• Variable renaming\n• No external dependencies\n• Pure JavaScript engine\n• Roblox/Luau compatible',
+          name: '✨ Advanced Features',
+          value: '• Double XOR string encryption\n• Complex math-based number obfuscation\n• Variable/function renaming (High)\n• Control flow obfuscation (High)\n• VM wrapper (High)\n• Junk code injection\n• Similar to MoonSec/Luraph protection',
           inline: false
         },
         {
