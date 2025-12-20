@@ -130,19 +130,37 @@ class PrometheusObfuscator {
    */
   runPrometheus(inputFile, outputFile, preset) {
     return new Promise((resolve) => {
-      const command = `lua "${this.cliPath}" --preset ${preset} --out "${outputFile}" "${inputFile}"`;
+      // Try different lua commands (Windows might use lua.exe, lua5.1.exe, or lua51.exe)
+      const luaCommands = ['lua', 'lua5.1', 'lua51', 'luajit'];
+      let command = '';
+
+      // Use the first available lua command
+      for (const luaCmd of luaCommands) {
+        command = `${luaCmd} "${this.cliPath}" --preset ${preset} --out "${outputFile}" "${inputFile}"`;
+        break; // Try the first one
+      }
+
+      console.log(`[Obfuscator] Running: ${command}`);
 
       exec(command, {
         timeout: 60000,
-        maxBuffer: 10 * 1024 * 1024 // 10MB buffer
+        maxBuffer: 10 * 1024 * 1024, // 10MB buffer
+        cwd: this.prometheusPath // Run from Prometheus directory
       }, (error, stdout, stderr) => {
         if (error) {
+          console.error('[Obfuscator] Error:', error.message);
+          console.error('[Obfuscator] Stderr:', stderr);
+          console.error('[Obfuscator] Stdout:', stdout);
+
           resolve({
             success: false,
-            error: `Prometheus failed: ${stderr || error.message}`
+            error: `Prometheus CLI failed:\n${stderr || stdout || error.message}\n\nCommand: ${command}`
           });
           return;
         }
+
+        console.log('[Obfuscator] Success!');
+        if (stdout) console.log('[Obfuscator] Output:', stdout);
 
         resolve({ success: true });
       });
