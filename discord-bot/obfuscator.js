@@ -103,7 +103,18 @@ class PrometheusObfuscator {
       }
 
       // Read obfuscated output
-      const obfuscatedCode = await fs.readFile(outputFile, 'utf8');
+      let obfuscatedCode = await fs.readFile(outputFile, 'utf8');
+
+      // Add Nexus header
+      const nexusHeader = `--[[\n` +
+        `    Obfuscated by Nexus Obfuscator\n` +
+        `    https://github.com/vsqzz/Nexus-Obfuscator\n` +
+        `    \n` +
+        `    Powered by Prometheus\n` +
+        `    Date: ${new Date().toLocaleString()}\n` +
+        `]]\n\n`;
+
+      obfuscatedCode = nexusHeader + obfuscatedCode;
       const obfuscatedSize = obfuscatedCode.length;
 
       // Cleanup temp files
