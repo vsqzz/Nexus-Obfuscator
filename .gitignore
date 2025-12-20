@@ -1,0 +1,15 @@
+node_modules/
+.env
+temp/
+*.log
+.DS_Store
+dist/
+build/
+*.luac
+luac.out
+coverage/
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
