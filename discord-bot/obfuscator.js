@@ -61,6 +61,7 @@ class AdvancedLuauObfuscator {
     const tempVar2 = this.generateConfusingVarName(8);
     const tempVar3 = this.generateConfusingVarName(8);
     const tempVar4 = this.generateConfusingVarName(8);
+    const loopVar = this.generateConfusingVarName(4); // Generate ONCE for loop counter
 
     // Complex nested function with fake variables
     return `(function() ` +
@@ -68,8 +69,8 @@ class AdvancedLuauObfuscator {
       `local ${tempVar2}='' ` +
       `local ${tempVar3}=${key2} ` +
       `local ${tempVar4}=${key1} ` +
-      `for ${this.generateConfusingVarName(4)}=1,#${tempVar1} do ` +
-      `${tempVar2}=${tempVar2}..string.char((${tempVar1}[${this.generateConfusingVarName(4)}]~${tempVar3})~${tempVar4}) ` +
+      `for ${loopVar}=1,#${tempVar1} do ` +
+      `${tempVar2}=${tempVar2}..string.char((${tempVar1}[${loopVar}]~${tempVar3})~${tempVar4}) ` +
       `end ` +
       `return ${tempVar2} end)()`;
   }
