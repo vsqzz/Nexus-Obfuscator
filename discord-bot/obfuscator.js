@@ -15,6 +15,7 @@ class PrometheusObfuscator {
     this.prometheusPath = path.join(__dirname, 'prometheus-obfuscator');
     this.cliPath = path.join(this.prometheusPath, 'cli.lua');
     this.tempDir = path.join(__dirname, 'temp');
+    this.luaCommand = 'lua'; // Will be updated when checkLuaInstalled() runs
   }
 
   /**
@@ -29,18 +30,27 @@ class PrometheusObfuscator {
   }
 
   /**
-   * Check if Lua is installed
+   * Check if Lua is installed and find which command works
    */
   async checkLuaInstalled() {
-    return new Promise((resolve) => {
-      exec('lua -v', (error) => {
-        if (error) {
-          resolve(false);
-        } else {
-          resolve(true);
-        }
+    const luaCommands = ['lua', 'lua5.1', 'lua51', 'lua5', 'luajit'];
+
+    for (const cmd of luaCommands) {
+      const works = await new Promise((resolve) => {
+        exec(`${cmd} -v`, { timeout: 5000 }, (error) => {
+          resolve(!error);
+        });
       });
-    });
+
+      if (works) {
+        this.luaCommand = cmd;
+        console.log(`[Obfuscator] Found working Lua command: ${cmd}`);
+        return true;
+      }
+    }
+
+    console.error('[Obfuscator] No Lua command found. Tried:', luaCommands.join(', '));
+    return false;
   }
 
   /**
@@ -61,8 +71,11 @@ class PrometheusObfuscator {
       if (!luaInstalled) {
         return {
           success: false,
-          error: 'Lua is not installed. Please install Lua 5.1 or LuaJIT to use Prometheus obfuscator.\n' +
-                 'Download: https://sourceforge.net/projects/luabinaries/'
+          error: 'Lua is not installed or not in PATH.\n\n' +
+                 'Tried commands: lua, lua5.1, lua51, lua5, luajit\n\n' +
+                 'Solutions:\n' +
+                 '1. Rename lua5.1.exe to lua.exe in C:\\Users\\kai\\Desktop\\lua\n' +
+                 '2. Or download Lua: https://sourceforge.net/projects/luabinaries/'
         };
       }
 
@@ -130,15 +143,7 @@ class PrometheusObfuscator {
    */
   runPrometheus(inputFile, outputFile, preset) {
     return new Promise((resolve) => {
-      // Try different lua commands (Windows might use lua.exe, lua5.1.exe, or lua51.exe)
-      const luaCommands = ['lua', 'lua5.1', 'lua51', 'luajit'];
-      let command = '';
-
-      // Use the first available lua command
-      for (const luaCmd of luaCommands) {
-        command = `${luaCmd} "${this.cliPath}" --preset ${preset} --out "${outputFile}" "${inputFile}"`;
-        break; // Try the first one
-      }
+      const command = `${this.luaCommand} "${this.cliPath}" --preset ${preset} --out "${outputFile}" "${inputFile}"`;
 
       console.log(`[Obfuscator] Running: ${command}`);
 
