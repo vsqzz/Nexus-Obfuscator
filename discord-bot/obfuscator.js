@@ -162,7 +162,7 @@ class PrometheusObfuscator {
         timeout: 60000,
         maxBuffer: 10 * 1024 * 1024, // 10MB buffer
         cwd: this.prometheusPath // Run from Prometheus directory
-      }, (error, stdout, stderr) => {
+      }, async (error, stdout, stderr) => {
         if (error) {
           console.error('[Obfuscator] Error:', error.message);
           console.error('[Obfuscator] Stderr:', stderr);
@@ -177,6 +177,22 @@ class PrometheusObfuscator {
 
         console.log('[Obfuscator] Success!');
         if (stdout) console.log('[Obfuscator] Output:', stdout);
+
+        // Check if output file was actually created
+        try {
+          const fs = require('fs');
+          if (!fs.existsSync(outputFile)) {
+            console.error('[Obfuscator] Output file not found:', outputFile);
+            resolve({
+              success: false,
+              error: `Prometheus succeeded but output file not found: ${outputFile}`
+            });
+            return;
+          }
+          console.log('[Obfuscator] Output file confirmed:', outputFile);
+        } catch (checkError) {
+          console.error('[Obfuscator] Error checking output file:', checkError);
+        }
 
         resolve({ success: true });
       });
