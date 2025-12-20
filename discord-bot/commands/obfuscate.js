@@ -22,7 +22,7 @@ module.exports = {
     ),
 
   async execute(interaction, { obfuscator }) {
-    await interaction.deferReply();
+    await interaction.deferReply({ ephemeral: true }); // Make it private
 
     try {
       const attachment = interaction.options.getAttachment('file');
@@ -60,7 +60,7 @@ module.exports = {
 
       // Obfuscate
       await interaction.editReply('🔒 Obfuscating...');
-      const result = obfuscator.obfuscate(code, { level });
+      const result = await obfuscator.obfuscate(code, { level });
 
       if (!result.success) {
         return await interaction.editReply({
@@ -74,42 +74,9 @@ module.exports = {
       const outputBuffer = Buffer.from(result.code, 'utf-8');
       const outputAttachment = new AttachmentBuilder(outputBuffer, { name: outputFilename });
 
-      // Create embed
-      const embed = new EmbedBuilder()
-        .setColor(0x00FF00)
-        .setTitle('✅ Obfuscation Complete!')
-        .setDescription(`Your script has been obfuscated with **${level.toUpperCase()}** level protection.`)
-        .addFields(
-          { name: '📊 Statistics', value: '━━━━━━━━━━━━━━━', inline: false },
-          { name: 'Original Size', value: `${result.stats.originalSize.toLocaleString()} bytes`, inline: true },
-          { name: 'Obfuscated Size', value: `${result.stats.obfuscatedSize.toLocaleString()} bytes`, inline: true },
-          { name: 'Size Ratio', value: `${result.stats.ratio}x`, inline: true },
-          { name: 'Strings Encrypted', value: `${result.stats.stringsEncrypted}`, inline: true },
-          { name: 'Numbers Obfuscated', value: `${result.stats.numbersObfuscated}`, inline: true },
-          { name: 'Variables Renamed', value: `${result.stats.variablesRenamed}`, inline: true },
-          { name: '\u200B', value: '━━━━━━━━━━━━━━━', inline: false },
-          {
-            name: '🎮 How to use in Roblox',
-            value: '```lua\n-- Upload to GitHub and use:\nloadstring(game:HttpGet("YOUR_RAW_URL"))()\n\n-- Or use directly:\nloadstring([[\n' +
-                   '  -- paste obfuscated code here\n]])()\n```',
-            inline: false
-          },
-          {
-            name: '💡 Tips',
-            value: '• **Medium** level recommended for production\n• **High** level uses VM wrapping (like MoonSec/Luraph)\n• Always test obfuscated code before deploying\n• Higher levels = better protection but larger file size',
-            inline: false
-          },
-          {
-            name: '🔒 Protection Features',
-            value: '• Double XOR string encryption\n• Complex number obfuscation\n• Variable/function renaming (High)\n• Control flow obfuscation (High)\n• VM wrapper (High)',
-            inline: false
-          }
-        )
-        .setFooter({ text: 'Nexus Obfuscator v2.0 • Made for Roblox/Luau' })
-        .setTimestamp();
-
+      // Send just the file
       await interaction.editReply({
-        embeds: [embed],
+        content: `✅ Obfuscation complete! **${level.toUpperCase()}** level | ${result.stats.ratio}x size`,
         files: [outputAttachment]
       });
 

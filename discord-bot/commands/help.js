@@ -45,6 +45,6 @@ module.exports = {
       .setFooter({ text: 'Nexus Obfuscator v2.0' })
       .setTimestamp();
 
-    await interaction.reply({ embeds: [embed] });
+    await interaction.reply({ embeds: [embed], ephemeral: true }); // Make it private
   }
 };
