@@ -15,9 +15,9 @@ module.exports = {
       option.setName('level')
         .setDescription('Obfuscation level')
         .addChoices(
-          { name: 'Low - Fast, basic protection', value: 'low' },
-          { name: 'Medium - Balanced (Recommended)', value: 'medium' },
-          { name: 'High - Maximum protection', value: 'high' }
+          { name: 'Low - String encryption (~6x size)', value: 'low' },
+          { name: 'Medium - Advanced obfuscation (~14x size) ⭐', value: 'medium' },
+          { name: 'High - Professional VM wrap (~25x size)', value: 'high' }
         )
     ),
 
@@ -96,7 +96,12 @@ module.exports = {
           },
           {
             name: '💡 Tips',
-            value: '• Use **Medium** level for best balance\n• **High** level may impact performance\n• Always test obfuscated code before deploying',
+            value: '• **Medium** level recommended for production\n• **High** level uses VM wrapping (like MoonSec/Luraph)\n• Always test obfuscated code before deploying\n• Higher levels = better protection but larger file size',
+            inline: false
+          },
+          {
+            name: '🔒 Protection Features',
+            value: '• Double XOR string encryption\n• Complex number obfuscation\n• Variable/function renaming (High)\n• Control flow obfuscation (High)\n• VM wrapper (High)',
             inline: false
           }
         )

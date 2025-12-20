@@ -2,14 +2,17 @@
 
 A powerful Discord bot for obfuscating Lua/Luau scripts, designed specifically for Roblox.
 
-## ✨ Features
+## ✨ Advanced Features
 
-- 🔐 **XOR String Encryption** - Encrypt all strings with random keys
-- 🔢 **Number Obfuscation** - Transform numbers using math operations
-- 🎯 **Variable Renaming** - Confusing variable names (high level)
+- 🔐 **Double XOR String Encryption** - Multi-layer encryption with confusing var names
+- 🔢 **Advanced Number Obfuscation** - 5 different complex mathematical methods
+- 🎯 **Variable/Function Renaming** - Extremely confusing names (high level)
+- 🌊 **Control Flow Obfuscation** - Fake conditions and jumps (high level)
+- 🖥️ **VM Wrapper** - Wraps code in virtual machine (high level)
+- 💀 **Junk Code Injection** - Realistic-looking dead code
 - 🚀 **Pure JavaScript** - No external dependencies required
 - 🎮 **Roblox Compatible** - Works with `loadstring()` in Roblox
-- 📊 **Multiple Protection Levels** - Low, Medium, High
+- 📊 **Professional-Grade** - Similar protection to MoonSec/Luraph
 
 ## 🚀 Quick Start
 
@@ -92,9 +95,11 @@ loadstring([[
 
 | Level | Features | Size Increase | Performance | Best For |
 |-------|----------|---------------|-------------|----------|
-| **Low** | String encryption | ~2.5x | Fast | Testing |
-| **Medium** | Strings + Numbers | ~4x | Good | Production ⭐ |
-| **High** | Full protection | ~5.5x | Slower | Max Security |
+| **Low** | String encryption only | ~6x | Fast | Testing |
+| **Medium** | Strings + Numbers + Junk | ~14x | Good | Production ⭐ |
+| **High** | Full + VM + Control Flow | ~25x | Slower | Max Security |
+
+**NEW:** High level now includes professional-grade VM wrapping similar to MoonSec/Luraph!
 
 ## 🛠️ Development
 
