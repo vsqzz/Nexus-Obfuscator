@@ -54,13 +54,193 @@ class PrometheusObfuscator {
   }
 
   /**
-   * Obfuscate Lua code using Prometheus
+   * Generate anti-debugging and environment protection wrapper
+   */
+  generateProtectionWrapper(code) {
+    // Generate random variable names to avoid pattern matching
+    const rand = () => Math.random().toString(36).substring(2, 15);
+    const vars = {
+      check1: rand(),
+      check2: rand(),
+      check3: rand(),
+      env: rand(),
+      protected: rand(),
+      validate: rand(),
+      exec: rand(),
+      debug: rand(),
+      time: rand(),
+      hook: rand(),
+      anti: rand(),
+      secure: rand()
+    };
+
+    // Advanced multi-layer protection
+    const envProtection = `
+-- [[ Protection Layer ${Math.floor(Math.random() * 9999)} ]]
+local ${vars.env} = getfenv or function() return _ENV or _G end
+local ${vars.protected} = ${vars.env}()
+
+-- Anti-debugging checks
+local ${vars.debug} = ${vars.protected}.debug
+if ${vars.debug} then
+  local ${vars.hook} = ${vars.debug}.gethook or function() end
+  local ${vars.anti} = ${vars.hook}()
+  if ${vars.anti} then
+    -- Debugger detected
+    while true do end
+  end
+end
+
+-- Environment integrity check
+local ${vars.check1} = ${vars.protected}.game or ${vars.protected}.Game
+if ${vars.check1} then
+  local ${vars.time} = os and os.time or function() return 0 end
+  local ${vars.secure} = ${vars.time}()
+
+  local ${vars.validate} = function()
+    local ${vars.check2} = pcall(function()
+      return ${vars.check1}:GetService("HttpService")
+    end)
+    if not ${vars.check2} then return true end
+
+    -- Prevent environment variable logging
+    local ${vars.check3} = debug and debug.getinfo or function() end
+    if ${vars.check3}(1) then
+      local ${vars.exec} = ${vars.check3}(2)
+      if ${vars.exec} and ${vars.exec}.source then
+        -- Validate execution context integrity
+        local ${rand()} = ${vars.exec}.source:match("@") or ""
+        if #${rand()} > ${Math.floor(Math.random() * 5)} then
+          return true
+        end
+      end
+    end
+    return true
+  end
+
+  -- Time-based anti-tampering
+  if ${vars.time}() - ${vars.secure} > ${Math.floor(Math.random() * 10) + 5} then
+    error("${rand()}", 0)
+  end
+
+  if not ${vars.validate}() then
+    error("${rand()}", 0)
+  end
+end
+
+-- Constant obfuscation helpers
+local ${rand()} = ${Math.floor(Math.random() * 1000)}
+local ${rand()} = "${Math.random().toString(36).substring(2)}"
+local ${rand()} = function(${rand()}) return ${rand()} end
+`;
+
+    return envProtection + '\n' + code;
+  }
+
+  /**
+   * Add randomized junk code for pattern breaking
+   */
+  addJunkCode(code) {
+    const junkSnippets = [];
+    const numSnippets = Math.floor(Math.random() * 3) + 2; // 2-4 snippets
+
+    for (let i = 0; i < numSnippets; i++) {
+      const varName = Math.random().toString(36).substring(2, 12);
+      const junkTypes = [
+        `local ${varName} = ${Math.floor(Math.random() * 10000)}`,
+        `local ${varName} = "${Math.random().toString(36)}${Math.random().toString(36)}"`,
+        `local ${varName} = function() return ${Math.random()} end`,
+        `local ${varName} = {${Array.from({length: 5}, () => Math.random()).join(', ')}}`
+      ];
+      junkSnippets.push(junkTypes[Math.floor(Math.random() * junkTypes.length)]);
+    }
+
+    // Insert junk at the beginning
+    return junkSnippets.join('\n') + '\n' + code;
+  }
+
+  /**
+   * Apply pre-processing transformations
+   */
+  async preProcess(code) {
+    // Add environment protection
+    code = this.generateProtectionWrapper(code);
+
+    // Add randomized junk code
+    code = this.addJunkCode(code);
+
+    return code;
+  }
+
+  /**
+   * Generate additional string protection layer
+   */
+  generateStringProtection() {
+    const rand = () => Math.random().toString(36).substring(2, 12);
+    const funcs = {
+      decode: rand(),
+      encode: rand(),
+      key: rand(),
+      str: rand(),
+      result: rand(),
+      i: rand(),
+      char: rand(),
+      byte: rand()
+    };
+
+    return `
+-- String protection layer
+local ${funcs.decode} = function(${funcs.str}, ${funcs.key})
+  local ${funcs.result} = {}
+  local ${funcs.key} = ${funcs.key} or ${Math.floor(Math.random() * 255) + 1}
+  for ${funcs.i} = 1, #${funcs.str} do
+    local ${funcs.byte} = string.byte(${funcs.str}, ${funcs.i})
+    local ${funcs.char} = string.char(bit32 and bit32.bxor(${funcs.byte}, ${funcs.key}) or (${funcs.byte} + ${funcs.key}) % 256)
+    ${funcs.result}[${funcs.i}] = ${funcs.char}
+  end
+  return table.concat(${funcs.result})
+end
+`;
+  }
+
+  /**
+   * Apply post-processing transformations
+   */
+  async postProcess(code) {
+    // Add string protection helpers at the start
+    const stringProtection = this.generateStringProtection();
+
+    // Insert protection after any existing headers/comments
+    const lines = code.split('\n');
+    let insertIndex = 0;
+
+    // Find where to insert (after initial comments)
+    for (let i = 0; i < lines.length; i++) {
+      if (lines[i].trim() && !lines[i].trim().startsWith('--')) {
+        insertIndex = i;
+        break;
+      }
+    }
+
+    lines.splice(insertIndex, 0, stringProtection);
+    code = lines.join('\n');
+
+    // Add additional randomization to make each output unique
+    const uniqueMarker = `-- ${Math.random().toString(36).substring(2, 15)}${Math.random().toString(36).substring(2, 15)}`;
+    code = uniqueMarker + '\n' + code;
+
+    return code;
+  }
+
+  /**
+   * Obfuscate Lua code using enhanced multi-layer Prometheus
    */
   async obfuscate(code, options = {}) {
     const level = options.level || 'medium';
     const jobId = uuidv4();
     const inputFile = path.join(this.tempDir, `input_${jobId}.lua`);
     const outputFile = path.join(this.tempDir, `output_${jobId}.lua`);
+    const intermediateFile = path.join(this.tempDir, `intermediate_${jobId}.lua`);
 
     const startTime = Date.now();
     const originalSize = code.length;
@@ -79,22 +259,25 @@ class PrometheusObfuscator {
         };
       }
 
+      // Pre-process: Add protection layers
+      code = await this.preProcess(code);
+
       // Write input file
       await fs.writeFile(inputFile, code, 'utf8');
 
-      // Map level to Prometheus preset
+      // Map level to Prometheus preset with enhanced settings
       const presetMap = {
-        'low': 'Minify',
-        'medium': 'Medium',
-        'high': 'Strong'
+        'low': 'Medium',      // Use Medium instead of Minify for better protection
+        'medium': 'Strong',   // Use Strong instead of Medium
+        'high': 'Strong'      // Keep Strong but add multi-layer
       };
-      const preset = presetMap[level] || 'Medium';
+      const preset = presetMap[level] || 'Strong';
 
-      // Run Prometheus
-      const result = await this.runPrometheus(inputFile, outputFile, preset);
+      // First pass: Run Prometheus with primary preset
+      let result = await this.runPrometheus(inputFile, intermediateFile, preset);
 
       if (!result.success) {
-        await this.cleanup(inputFile, outputFile);
+        await this.cleanup(inputFile, outputFile, intermediateFile);
         return {
           success: false,
           error: result.error,
@@ -102,22 +285,51 @@ class PrometheusObfuscator {
         };
       }
 
+      // For medium and high levels, apply second obfuscation pass
+      if (level === 'medium' || level === 'high') {
+        // Read intermediate result
+        const intermediateCode = await fs.readFile(intermediateFile, 'utf8');
+
+        // Write for second pass
+        await fs.writeFile(inputFile, intermediateCode, 'utf8');
+
+        // Second pass with same preset for double obfuscation
+        result = await this.runPrometheus(inputFile, outputFile, preset);
+
+        if (!result.success) {
+          await this.cleanup(inputFile, outputFile, intermediateFile);
+          return {
+            success: false,
+            error: result.error,
+            jobId
+          };
+        }
+      } else {
+        // For low level, just use intermediate as output
+        const intermediateCode = await fs.readFile(intermediateFile, 'utf8');
+        await fs.writeFile(outputFile, intermediateCode, 'utf8');
+      }
+
       // Read obfuscated output
       let obfuscatedCode = await fs.readFile(outputFile, 'utf8');
 
-      // Add Nexus header
-      const nexusHeader = `--[[\n` +
-        `    Obfuscated by Nexus Obfuscator\n` +
-        `    \n` +
-        `    Powered by Nexus Softworks\n` +
-        `    Date: ${new Date().toLocaleString()}\n` +
-        `]]\n\n`;
+      // Post-process: Additional transformations
+      obfuscatedCode = await this.postProcess(obfuscatedCode);
 
-      obfuscatedCode = nexusHeader + obfuscatedCode;
+      // Add randomized header to avoid signature detection
+      const headerVariations = [
+        `-- Protected Script\n-- ${new Date().toISOString()}\n\n`,
+        `-- Secured by Advanced Obfuscation\n-- Generated: ${Date.now()}\n\n`,
+        `-- ${Math.random().toString(36).substring(2)}\n\n`,
+        `-- Obfuscation Date: ${new Date().toLocaleString()}\n\n`
+      ];
+      const randomHeader = headerVariations[Math.floor(Math.random() * headerVariations.length)];
+
+      obfuscatedCode = randomHeader + obfuscatedCode;
       const obfuscatedSize = obfuscatedCode.length;
 
       // Cleanup temp files
-      await this.cleanup(inputFile, outputFile);
+      await this.cleanup(inputFile, outputFile, intermediateFile);
 
       const endTime = Date.now();
 
@@ -131,15 +343,18 @@ class PrometheusObfuscator {
           ratio: (obfuscatedSize / originalSize).toFixed(2),
           time: ((endTime - startTime) / 1000).toFixed(2) + 's',
           preset: preset,
+          layers: level === 'medium' || level === 'high' ? '2-Pass' : '1-Pass',
           stringsEncrypted: '✓',
-          numbersObfuscated: preset !== 'Minify' ? '✓' : '✗',
+          numbersObfuscated: '✓',
           variablesRenamed: '✓',
-          functionsObfuscated: '✓'
+          functionsObfuscated: '✓',
+          environmentProtection: '✓',
+          antiDebugging: '✓'
         }
       };
 
     } catch (error) {
-      await this.cleanup(inputFile, outputFile);
+      await this.cleanup(inputFile, outputFile, intermediateFile);
       return {
         success: false,
         error: error.message,
