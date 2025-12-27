@@ -146,11 +146,41 @@ class NexusBot {
       console.error('❌ Unhandled promise rejection:', error);
     });
 
-    // Graceful shutdown
-    process.on('SIGINT', () => {
-      console.log('\n\n🛑 Shutting down gracefully...');
-      this.client.destroy();
-      process.exit(0);
+    // Graceful shutdown handlers
+    const shutdown = async (signal) => {
+      console.log(`\n\n🛑 Received ${signal} - Shutting down gracefully...`);
+
+      try {
+        // Destroy Discord client
+        await this.client.destroy();
+        console.log('✅ Discord client disconnected');
+
+        // Clear command cache for hot reload
+        if (process.env.NODE_ENV === 'development') {
+          for (const file of Object.keys(require.cache)) {
+            if (file.includes('commands/') || file.includes('obfuscator.js')) {
+              delete require.cache[file];
+            }
+          }
+          console.log('✅ Command cache cleared for reload');
+        }
+
+        console.log('👋 Shutdown complete\n');
+        process.exit(0);
+      } catch (error) {
+        console.error('❌ Error during shutdown:', error);
+        process.exit(1);
+      }
+    };
+
+    process.on('SIGINT', () => shutdown('SIGINT'));
+    process.on('SIGTERM', () => shutdown('SIGTERM'));
+
+    // Handle nodemon restarts
+    process.once('SIGUSR2', async () => {
+      console.log('\n\n🔄 Hot reload triggered...');
+      await shutdown('SIGUSR2');
+      process.kill(process.pid, 'SIGUSR2');
     });
   }
 

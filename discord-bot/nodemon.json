@@ -1,0 +1,23 @@
+{
+  "watch": [
+    "bot.js",
+    "obfuscator.js",
+    "commands/**/*.js",
+    ".env"
+  ],
+  "ignore": [
+    "temp/**",
+    "node_modules/**",
+    "*.log"
+  ],
+  "ext": "js,json,env",
+  "delay": 1000,
+  "verbose": true,
+  "env": {
+    "NODE_ENV": "development"
+  },
+  "events": {
+    "restart": "echo '\n🔄 Restarting bot...\n'",
+    "crash": "echo '\n💥 Bot crashed - waiting for changes...\n'"
+  }
+}
