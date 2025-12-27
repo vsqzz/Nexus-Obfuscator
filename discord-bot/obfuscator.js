@@ -58,7 +58,7 @@ class PrometheusObfuscator {
    */
   generateProtectionWrapper(code) {
     // Generate random variable names to avoid pattern matching
-    const rand = () => Math.random().toString(36).substring(2, 15);
+    const rand = () => 'v' + Math.random().toString(36).substring(2, 15);
     const vars = {
       check1: rand(),
       check2: rand(),
@@ -141,7 +141,7 @@ local ${rand()} = "${Math.random().toString(36).substring(2)}"
     const numSnippets = Math.floor(Math.random() * 3) + 2; // 2-4 snippets
 
     for (let i = 0; i < numSnippets; i++) {
-      const varName = Math.random().toString(36).substring(2, 12);
+      const varName = 'l' + Math.random().toString(36).substring(2, 12);
       const junkTypes = [
         `local ${varName} = ${Math.floor(Math.random() * 10000)}`,
         `local ${varName} = "${Math.random().toString(36)}${Math.random().toString(36)}"`,
@@ -172,7 +172,7 @@ local ${rand()} = "${Math.random().toString(36).substring(2)}"
    * Generate additional string protection layer
    */
   generateStringProtection() {
-    const rand = () => Math.random().toString(36).substring(2, 12);
+    const rand = () => 's' + Math.random().toString(36).substring(2, 12);
     const funcs = {
       decode: rand(),
       encode: rand(),
