@@ -109,10 +109,7 @@ if ${vars.check1} then
       local ${vars.exec} = ${vars.check3}(2)
       if ${vars.exec} and ${vars.exec}.source then
         -- Validate execution context integrity
-        local ${rand()} = ${vars.exec}.source:match("@") or ""
-        if #${rand()} > ${Math.floor(Math.random() * 5)} then
-          return true
-        end
+        return true
       end
     end
     return true
@@ -131,7 +128,6 @@ end
 -- Constant obfuscation helpers
 local ${rand()} = ${Math.floor(Math.random() * 1000)}
 local ${rand()} = "${Math.random().toString(36).substring(2)}"
-local ${rand()} = function(${rand()}) return ${rand()} end
 `;
 
     return envProtection + '\n' + code;
@@ -149,8 +145,8 @@ local ${rand()} = function(${rand()}) return ${rand()} end
       const junkTypes = [
         `local ${varName} = ${Math.floor(Math.random() * 10000)}`,
         `local ${varName} = "${Math.random().toString(36)}${Math.random().toString(36)}"`,
-        `local ${varName} = function() return ${Math.random()} end`,
-        `local ${varName} = {${Array.from({length: 5}, () => Math.random()).join(', ')}}`
+        `local ${varName} = function() return ${Math.random().toFixed(10)} end`,
+        `local ${varName} = {${Array.from({length: 5}, () => Math.random().toFixed(8)).join(', ')}}`
       ];
       junkSnippets.push(junkTypes[Math.floor(Math.random() * junkTypes.length)]);
     }
