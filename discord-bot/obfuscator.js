@@ -242,6 +242,9 @@ end
     const originalSize = code.length;
 
     try {
+      // Ensure temp directory exists
+      await this.initialize();
+
       // Check if Lua is installed
       const luaInstalled = await this.checkLuaInstalled();
       if (!luaInstalled) {
