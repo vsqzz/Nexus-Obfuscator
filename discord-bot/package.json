@@ -6,6 +6,7 @@
   "scripts": {
     "start": "node bot.js",
     "dev": "nodemon bot.js",
+    "dev:verbose": "nodemon --verbose bot.js",
     "setup": "bash setup.sh || setup.bat"
   },
   "keywords": [
