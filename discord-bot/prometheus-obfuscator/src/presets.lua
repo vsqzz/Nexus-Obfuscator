@@ -170,5 +170,75 @@ return {
                 }
             },
         }
+    };
+    ["Nexus"] = {
+        -- Nexus Enhanced Obfuscation Preset
+        -- Maximum protection against deobfuscation
+        LuaVersion = "Lua51";
+        VarNamePrefix = "";
+        NameGenerator = "MangledShuffled";
+        PrettyPrint = false;
+        Seed = 0; -- Random seed each time
+        Steps = {
+            -- Layer 1: Initial VM wrapper
+            {
+                Name = "Vmify";
+                Settings = {};
+            },
+            -- Layer 2: String encryption
+            {
+                Name = "EncryptStrings";
+                Settings = {};
+            },
+            -- Layer 3: Split strings for additional obfuscation
+            {
+                Name = "SplitStrings";
+                Settings = {};
+            },
+            -- Layer 4: Anti-tampering protection
+            {
+                Name = "AntiTamper";
+                Settings = {
+                    UseDebug = true;
+                };
+            },
+            -- Layer 5: Second VM layer
+            {
+                Name = "Vmify";
+                Settings = {};
+            },
+            -- Layer 6: Constant array with aggressive settings
+            {
+                Name = "ConstantArray";
+                Settings = {
+                    Treshold = 1;
+                    StringsOnly = false; -- Include all constants
+                    Shuffle = true;
+                    Rotate = true;
+                    LocalWrapperTreshold = 1;
+                };
+            },
+            -- Layer 7: Numbers to complex expressions
+            {
+                Name = "NumbersToExpressions";
+                Settings = {};
+            },
+            -- Layer 8: Proxify local variables
+            {
+                Name = "ProxifyLocals";
+                Settings = {};
+            },
+            -- Layer 9: Third VM layer for maximum obfuscation
+            {
+                Name = "Vmify";
+                Settings = {};
+            },
+            -- Layer 10: Final function wrapper
+            {
+                Name = "WrapInFunction";
+                Settings = {};
+            },
+        }
+    };
     },
 }
