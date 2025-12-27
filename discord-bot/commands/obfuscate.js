@@ -63,8 +63,14 @@ module.exports = {
       const result = await obfuscator.obfuscate(code, { level });
 
       if (!result.success) {
+        // Truncate error if too long for Discord
+        let errorMsg = result.error || 'Unknown error';
+        if (errorMsg.length > 1800) {
+          errorMsg = errorMsg.substring(0, 1800) + '\n\n... (error truncated)';
+        }
+
         return await interaction.editReply({
-          content: `❌ Obfuscation failed: ${result.error}`,
+          content: `❌ Obfuscation failed:\n\`\`\`\n${errorMsg}\n\`\`\``,
           ephemeral: true
         });
       }
