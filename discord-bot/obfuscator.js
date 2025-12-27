@@ -259,7 +259,8 @@ end
       }
 
       // Pre-process: Add protection layers
-      code = await this.preProcess(code);
+      // TEMPORARILY DISABLED - causes Prometheus parsing errors
+      // code = await this.preProcess(code);
 
       // Write input file
       await fs.writeFile(inputFile, code, 'utf8');
