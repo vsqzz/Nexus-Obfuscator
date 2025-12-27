@@ -265,13 +265,14 @@ end
       // Write input file
       await fs.writeFile(inputFile, code, 'utf8');
 
-      // Map level to Prometheus preset with enhanced Nexus preset
+      // Map level to Prometheus preset
+      // Using standard presets - Nexus has compatibility issues
       const presetMap = {
         'low': 'Medium',      // Basic protection
-        'medium': 'Nexus',    // Enhanced Nexus preset
-        'high': 'Nexus'       // Maximum Nexus preset with 2-pass
+        'medium': 'Strong',   // Strong preset
+        'high': 'Strong'      // Strong preset with 2-pass
       };
-      const preset = presetMap[level] || 'Nexus';
+      const preset = presetMap[level] || 'Strong';
 
       // First pass: Run Prometheus with primary preset
       let result = await this.runPrometheus(inputFile, intermediateFile, preset);
